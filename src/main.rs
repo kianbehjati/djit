@@ -42,22 +42,24 @@ fn main() {
     if is_uv{
         println!("Creating virtual env with uv...");
         process::Command::new("uv").args(["venv",".venv"]).output().expect("venv failed");
-        process::Command::new("cmd").args(["/C","uv pip install django"]).output().expect("venv failed");
+        process::Command::new("cmd").args(["/C","uv pip install django python-dotenv"]).output().expect("venv failed");
         println!("Installing django with uv...");
     }else {
         println!("Creating virtual env...");
         process::Command::new("python").args(["-m","venv",".venv"]).output().expect("venv failed");
-        process::Command::new("cmd").args(["/C","uv pip install django"]).output().expect("venv failed");
+        process::Command::new("cmd").args(["/C","uv pip install django python-dotenv"]).output().expect("venv failed");
         println!("Installing django...");
     }
     
     println!("Creating Django App...");
     process::Command::new("cmd").args(["/C",".venv\\Scripts\\python.exe -m django startproject",res.name.as_str(),"."]).output().expect("Django App Failed.");
 
-    
+    let mut apps_str = String::new();
+
     if apps.len() > 1{
         println!("Creating Apps...");
         for app in apps {
+            apps_str.push_str(&format!(", \"{}\"",app));
             process::Command::new("cmd").args(["/C",".venv\\Scripts\\python.exe -m django startapp",app]).spawn().expect("Starting App Failed.");
         }
     }
@@ -65,7 +67,9 @@ fn main() {
     let settings = File::create("settings.py").unwrap();
     let mut h = Handlebars::new();
     h.register_template_file("template", "./settings.tpl").unwrap();
-    h.render_to_write("template", &json!({"name" : "Kian","job" : "Software Dev"}),&settings).unwrap();
-
+    h.render_to_write("template", &json!({"app_name" : res.name.as_str(),"apps" : apps_str}),&settings).unwrap();
+    let settings_path = res.name.clone()+"\\"+"settings.py";
+    let settings_backup = res.name.clone()+"\\"+"settings.bkp.py";
+    process::Command::new("cmd").args(["/C","copy",settings_path.as_str(),settings_backup.as_str()]).spawn().expect("Failed");
 }
 
