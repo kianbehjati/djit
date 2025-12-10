@@ -3,14 +3,13 @@ use std::process;
 use crate::parser::parser;
 use handlebars::Handlebars;
 use serde_json::json;
-use std::fs::{File, write};
+use std::fs::{File, write,create_dir};
 
 fn main() {
     // arg parsing
     let res = parser();
     let apps: Vec<_> = res.apps.split(",").collect();
     let mut is_uv: bool = false;
-    // end
 
     // embeding files into binary
     let sec_gen = include_str!("sec_gen.py");
@@ -40,7 +39,7 @@ fn main() {
         }
     }
 
-    // end
+
   
     // init command chain
     
@@ -70,20 +69,24 @@ fn main() {
         }
     }
 
-    let settings = File::create("settings.py").unwrap();
-    let mut h = Handlebars::new();
-    h.register_template_file("template", "./settings.tpl").unwrap();
-    h.render_to_write("template", &json!({"app_name" : res.name.as_str(),"apps" : apps_str}),&settings).unwrap();
+    //handlebars template rendering 
+    let settings = File::create("settings.py").expect("Failed to Create settings.py file.");
+    let mut hb = Handlebars::new();
+    hb.register_template_file("template", "./settings.tpl").expect("Failed to create template from settings.tpl in handlebars");
+    hb.render_to_write("template", &json!({"app_name" : res.name.as_str(),"apps" : apps_str}),&settings).unwrap();
     let settings_path = res.name.clone()+"\\"+"settings.py";
     let env_path = res.name.clone()+"\\"+".env";
     let settings_backup = res.name.clone()+"\\"+"settings.bkp.py";
 
-    process::Command::new("cmd").args(["/C","copy",settings_path.as_str(),settings_backup.as_str()]).output().expect("Failed");
-    process::Command::new("cmd").args(["/C","move","settings.py",settings_path.as_str()]).spawn().expect("Failed");
-    process::Command::new("cmd").args(["/C",".venv\\Scripts\\python.exe sec_gen.py"]).output().expect("Failed");
-    process::Command::new("cmd").args(["/C","move",".env",env_path.as_str()]).spawn().expect("Failed");
+    process::Command::new("cmd").args(["/C","copy",settings_path.as_str(),settings_backup.as_str()]).output().expect("Failed to copy backup original settings. ");
+    process::Command::new("cmd").args(["/C","move","settings.py",settings_path.as_str()]).output().expect("Failed to replace settings. ");
+    process::Command::new("cmd").args(["/C",".venv\\Scripts\\python.exe sec_gen.py"]).output().expect("Failed to run .env script. ");
+    process::Command::new("cmd").args(["/C","move",".env",env_path.as_str()]).output().expect("Failed to move .env into main app. ");
 
     //clean up
     process::Command::new("cmd").args(["/C","del","/Q","settings.tpl","sec_gen.py"]).spawn().expect("Failed to remove junk!");
+
+    //templates
+    create_dir("templates").expect("Failed to create 'templates'. ");
 }
 
