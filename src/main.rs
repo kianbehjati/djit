@@ -3,7 +3,7 @@ use std::process;
 use crate::parser::parser;
 use handlebars::Handlebars;
 use serde_json::json;
-use std::fs::File;
+use std::fs::{File, write};
 
 fn main() {
     // arg parsing
@@ -11,6 +11,12 @@ fn main() {
     let apps: Vec<_> = res.apps.split(",").collect();
     let mut is_uv: bool = false;
     // end
+
+    // embeding files into binary
+    let sec_gen = include_str!("sec_gen.py");
+    let settings_tpl = include_str!("settings.tpl");
+    write("sec_gen.py", sec_gen).expect("Failed to write python script!");
+    write("settings.tpl", settings_tpl).expect("Failed to write settings template!");
 
     // look for uv
     if cfg!(target_os = "windows"){
@@ -77,5 +83,7 @@ fn main() {
     process::Command::new("cmd").args(["/C",".venv\\Scripts\\python.exe sec_gen.py"]).output().expect("Failed");
     process::Command::new("cmd").args(["/C","move",".env",env_path.as_str()]).spawn().expect("Failed");
 
+    //clean up
+    process::Command::new("cmd").args(["/C","del","/Q","settings.tpl","sec_gen.py"]).spawn().expect("Failed to remove junk!");
 }
 
