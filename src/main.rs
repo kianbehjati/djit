@@ -69,7 +69,13 @@ fn main() {
     h.register_template_file("template", "./settings.tpl").unwrap();
     h.render_to_write("template", &json!({"app_name" : res.name.as_str(),"apps" : apps_str}),&settings).unwrap();
     let settings_path = res.name.clone()+"\\"+"settings.py";
+    let env_path = res.name.clone()+"\\"+".env";
     let settings_backup = res.name.clone()+"\\"+"settings.bkp.py";
-    process::Command::new("cmd").args(["/C","copy",settings_path.as_str(),settings_backup.as_str()]).spawn().expect("Failed");
+
+    process::Command::new("cmd").args(["/C","copy",settings_path.as_str(),settings_backup.as_str()]).output().expect("Failed");
+    process::Command::new("cmd").args(["/C","move","settings.py",settings_path.as_str()]).spawn().expect("Failed");
+    process::Command::new("cmd").args(["/C",".venv\\Scripts\\python.exe sec_gen.py"]).output().expect("Failed");
+    process::Command::new("cmd").args(["/C","move",".env",env_path.as_str()]).spawn().expect("Failed");
+
 }
 
