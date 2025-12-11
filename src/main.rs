@@ -1,7 +1,7 @@
 mod parser;
 mod check;
 use std::process;
-use crate::parser::parser;
+use crate::parser::{DjangoOptions, parser};
 use handlebars::Handlebars;
 use serde_json::json;
 use std::fs::{File, write,create_dir};
@@ -14,7 +14,18 @@ fn main() {
     };
 
     // arg parsing
-    let res = parser();
+    let django_option = parser();
+    let res:DjangoOptions; 
+    match django_option {
+        Some(d) => {
+            res = d;
+        }
+        None => {
+            println!("Usage: \n \tdjit project_name apps(e.g : firstapp,secondapp,...)\n \t#Note : no space between app , seperate with ','.\n \tdefault django app name is core");
+            return;
+        }
+    }
+    
     let apps: Vec<_> = res.apps.split(",").collect();
     let mut is_uv: bool = false;
 
