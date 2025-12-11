@@ -1,4 +1,5 @@
 mod parser;
+mod check;
 use std::process;
 use crate::parser::parser;
 use handlebars::Handlebars;
@@ -6,6 +7,12 @@ use serde_json::json;
 use std::fs::{File, write,create_dir};
 
 fn main() {
+
+    //checking Internet Connection
+    if !(check::checker()){
+        return;
+    };
+
     // arg parsing
     let res = parser();
     let apps: Vec<_> = res.apps.split(",").collect();
