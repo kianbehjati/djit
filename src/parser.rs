@@ -1,7 +1,5 @@
 use std::env;
 
-use crate::check;
-
 pub struct DjangoOptions {
     pub name:String,
     pub apps:String,
