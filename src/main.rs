@@ -97,7 +97,7 @@ fn main() {
         println!("Creating virtual env...");
         if cfg!(target_os = "windows"){
             process::Command::new("python").args(["-m","venv",".venv"]).output().expect("venv failed");
-            process::Command::new("cmd").args(["/C",".venv\\Scripts\\pip.exe pip install django python-dotenv"]).output().expect("venv failed");
+            process::Command::new("cmd").args(["/C",".venv\\Scripts\\pip.exe install django python-dotenv"]).output().expect("venv failed");
         }
         else {
             process::Command::new("sudo").args(["apt","install","python3-venv"]).output().expect("installing python venv failed");
