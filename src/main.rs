@@ -40,7 +40,7 @@ fn main() {
         let process_c = process::Command::new("powershell").args(["-c","(Get-command uv).Path"]).output().expect("powershell failed");
         match String::from_utf8_lossy(&process_c.stdout).len() {
             0 => {
-                println!("no uv found :(");
+                println!("uv not found :(");
                 let python_path = process::Command::new("powershell").args(["-c","(Get-command python).Path"]).output().expect("powershell failed");
                 match String::from_utf8_lossy(&python_path.stdout).len() {
                     0 => {
@@ -60,7 +60,7 @@ fn main() {
         let process_c = process::Command::new("which").args(["uv"]).output().expect("bash failed");
         match String::from_utf8_lossy(&process_c.stdout).len() {
             0 => {
-                println!("no uv found :(");
+                println!("uv not found :(");
                 let python_path = process::Command::new("which").args(["python3"]).output().expect("bash shell failed");
                 match String::from_utf8_lossy(&python_path.stdout).len() {
                     0 => {
