@@ -100,10 +100,9 @@ fn main() {
             process::Command::new("cmd").args(["/C",".venv\\Scripts\\pip.exe install django python-dotenv"]).output().expect("venv failed");
         }
         else {
-            process::Command::new("sudo").args(["apt","install","python3-venv"]).output().expect("installing python venv failed");
             process::Command::new("python3").args(["-m","venv",".venv"]).output().expect("venv failed");
             println!("Installing django...");
-            process::Command::new(".venv/bin/pip").args(["install" ,"django" ,"python-dotenv"]).output().expect("venv failed"); // will get an error bc python -m venv doesn't work in linux
+            process::Command::new(".venv/bin/pip").args(["install" ,"django" ,"python-dotenv"]).output().expect("venv failed / make sure that you have python3-venv installed !!!"); // will get an error bc python -m venv doesn't work in linux
         }
         
     }
