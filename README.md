@@ -12,7 +12,7 @@ djit core users,shop
 
 <h1>Important</h1>
 
-- this project is currently far from my ideas and has so much potential
+- this project is currently far from my ideas and has so much more potential and use for django community
 - this project is based on [uv](https://docs.astral.sh/uv/) if you want to have best experiece and speed make sure that you have it installed
 - if you're on linux install python3-venv manually
 - __ENJOY__
