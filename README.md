@@ -3,7 +3,7 @@
 </p>
 
 <h1> Use Case </h1>
-If you're a Django Developer who's done with doing same things over and over again to start/setup your project , this tool is for you
+If you're a Django Developer who's done with doing same things over and over again to start/setup/manage your project , this tool is for you
 
 
 <h1> Usage </h1>
