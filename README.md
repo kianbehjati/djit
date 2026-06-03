@@ -1,3 +1,9 @@
+<h1> Djit </h1>
+
+![Static Badge](https://img.shields.io/badge/Release-0.1.0-blue?link=https%3A%2F%2Fgithub.com%2Fkianbehjati%2Fdjit%2Freleases%2Ftag%2F0.1.0)
+![Static Badge](https://img.shields.io/badge/License-Apache_2-red?link=https%3A%2F%2Fgithub.com%2Fkianbehjati%2Fdjit%2Ftree%2Fmain%23Apache-2.0-1-ov-file)
+![Static Badge](https://img.shields.io/badge/Build-passing-green?link=https%3A%2F%2Fgithub.com%2Fkianbehjati%2Fdjit%2Factions%2Fworkflows%2Frust.yml)
+
 <p align=center>
 <img width="500" height="500" alt="djit" src="https://github.com/user-attachments/assets/b41a2d6b-9539-4949-a55a-6c7a706f3c46" />
 </p>
