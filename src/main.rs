@@ -21,7 +21,7 @@ fn main() {
             res = d;
         }
         None => {
-            println!("Usage: \n \tdjit project_name apps(e.g : firstapp,secondapp,...)\n \t#Note : no space between app , seperate with ','.\n \tdefault django app name is core");
+            println!("Usage: \n \tdjit project_name apps(e.g : firstapp,secondapp,...)\n \t#Note : no space between app , seperate with ','.\n \tdefault django app name is core"); // None => -h or --help
             return;
         }
     }
@@ -44,7 +44,7 @@ fn main() {
                 println!("uv not found :("); 
             },
             _ => {
-                println!("you're a uv guy :>");
+                println!("uv installed :>");
                 is_uv = true;
             }
         }
@@ -66,7 +66,7 @@ fn main() {
                 println!("uv not found :(");
             },
             _ => {
-                println!("you're a uv guy :>");
+                println!("uv installed :>");
                 is_uv = true;
             }
         }
