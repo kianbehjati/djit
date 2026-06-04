@@ -37,45 +37,49 @@ fn main() {
 
     // look for uv & python
     if cfg!(target_os = "windows"){
+        //check uv
         let process_c = process::Command::new("powershell").args(["-c","(Get-command uv).Path"]).output().expect("powershell failed");
         match String::from_utf8_lossy(&process_c.stdout).len() {
             0 => {
-                println!("uv not found :(");
-                let python_path = process::Command::new("powershell").args(["-c","(Get-command python).Path"]).output().expect("powershell failed");
-                match String::from_utf8_lossy(&python_path.stdout).len() {
-                    0 => {
-                        println!("python not installed.");
-                        return;
-                    }
-                    _ => ()
-                }
+                println!("uv not found :("); 
             },
             _ => {
                 println!("you're a uv guy :>");
                 is_uv = true;
             }
         }
+        //check python
+        let python_path = process::Command::new("powershell").args(["-c","(Get-command python).Path"]).output().expect("powershell failed");
+        match String::from_utf8_lossy(&python_path.stdout).len() {
+            0 => {
+                println!("python not installed.");
+                return;
+            }
+            _ => ()
+        }
     }
     else {
+        
         let process_c = process::Command::new("which").args(["uv"]).output().expect("bash failed");
         match String::from_utf8_lossy(&process_c.stdout).len() {
             0 => {
                 println!("uv not found :(");
-                let python_path = process::Command::new("which").args(["python3"]).output().expect("bash shell failed");
-                match String::from_utf8_lossy(&python_path.stdout).len() {
-                    0 => {
-                        println!("python not installed.");
-                        return;
-                    }
-                    _ => ()
-                }
             },
             _ => {
                 println!("you're a uv guy :>");
                 is_uv = true;
             }
         }
-    }
+
+        let python_path = process::Command::new("which").args(["python3"]).output().expect("bash shell failed");
+        match String::from_utf8_lossy(&python_path.stdout).len() {
+            0 => {
+                println!("python not installed.");
+                return;
+            }
+            _ => ()
+        }
+}
 
 
   
