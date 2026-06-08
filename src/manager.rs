@@ -93,3 +93,23 @@ pub fn save(django_option: DjangoOptions, description: String, path: PathBuf, pr
     let json_string = serde_json::to_string(&projects).unwrap();
     file.write(json_string.as_bytes()).unwrap();
 }
+
+pub fn delete(name: String, path: PathBuf, projects: &mut Value) {
+    // delete from list
+    let index = projects["projects"].as_array().unwrap().iter().position(|x| x.as_str().unwrap() == name).unwrap();
+    
+    if (projects[&name]["path"].as_str() == path.to_str()){
+        projects.as_object_mut().unwrap().remove(&name);
+        projects["projects"].as_array_mut().unwrap().remove(index);
+    }
+    
+    // delete from file
+    let path = dirs::home_dir()
+    .unwrap()
+    .join(".djit")
+    .join("projects.json");
+
+    let mut file = std::fs::File::create(&path).unwrap();
+    let json_string = serde_json::to_string(&projects).unwrap();
+    file.write(json_string.as_bytes()).unwrap();
+}
