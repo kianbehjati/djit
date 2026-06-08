@@ -1,7 +1,7 @@
-use std::{io::{Read}};
+use std::io::{Read, Write};
 use crate::parser::DjangoOptions;
 use dirs;
-use serde_json;
+use serde_json::{self, Value};
 use chrono::{NaiveDateTime};
 use std::path::PathBuf;
 
@@ -11,7 +11,8 @@ pub struct DjangoProject {
     pub description : String,
     pub path: PathBuf
 }
-pub fn list() -> Vec<DjangoProject>{
+
+pub fn list() -> Value{
     let mut list: Vec<DjangoProject> = Vec::new();
     // read from file and push to list
     
@@ -46,7 +47,7 @@ pub fn list() -> Vec<DjangoProject>{
             }
      */
 
-    let projects:serde_json::Value = serde_json::from_str(&string).unwrap();
+    let mut projects:serde_json::Value = serde_json::from_str(&string).unwrap();
     for project in projects["projects"].as_array().unwrap() {
         let project_data = projects[project.as_str().unwrap()].clone();
         let django_project = DjangoProject {
@@ -62,5 +63,33 @@ pub fn list() -> Vec<DjangoProject>{
         list.push(django_project);
     }
 
-    return list;
+    return projects;
 } 
+
+pub fn save(django_option: DjangoOptions, description: String, path: PathBuf, projects: &mut Value) {
+    
+    let new_project = DjangoProject {
+        django_options: django_option,
+        date: chrono::Local::now().naive_local(),
+        description,
+        path
+    };
+    
+    projects["projects"].as_array_mut().unwrap().push(Value::String(new_project.django_options.name.clone()));    
+    projects[new_project.django_options.name.clone()] = serde_json::json!({
+        "path": new_project.path.to_str().unwrap(),
+        "apps": new_project.django_options.apps,
+        "date": new_project.date.format("%Y-%m-%d %H:%M:%S").to_string(),
+        "description": new_project.description
+    });
+
+    // save to file
+    let path = dirs::home_dir()
+    .unwrap()
+    .join(".djit")
+    .join("projects.json");
+
+    let mut file = std::fs::File::create(&path).unwrap();
+    let json_string = serde_json::to_string(&projects).unwrap();
+    file.write(json_string.as_bytes()).unwrap();
+}
