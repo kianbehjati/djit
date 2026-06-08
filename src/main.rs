@@ -1,11 +1,7 @@
 mod starter;
 mod check;
 mod parser;
+mod manager;
 fn main(){
-
-    let res = parser::parser();
-    match res {
-        Some(options) => starter::starter(options),
-        None => println!("Failed to parse arguments"),
-    }
+    unimplemented!()
 }
