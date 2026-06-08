@@ -1,12 +1,12 @@
-use std::process;
+use std::{path, process};
 use crate::parser::{DjangoOptions};
 use crate::check;
 use handlebars::Handlebars;
 use serde_json::json;
 use std::fs::{File, write,create_dir};
 
-pub fn starter(res: DjangoOptions) {
-
+pub fn starter(res: DjangoOptions, path: String) {
+    
     //checking Internet Connection
     if !(check::checker()){
         return;
@@ -18,6 +18,10 @@ pub fn starter(res: DjangoOptions) {
     // embeding files into binary
     let sec_gen = include_str!("sec_gen.py");
     let settings_tpl = include_str!("settings.tpl");
+
+    std::env::set_current_dir(std::path::Path::new(&path));
+    
+    //write templates in given path
     write("sec_gen.py", sec_gen).expect("Failed to write python script!");
     write("settings.tpl", settings_tpl).expect("Failed to write settings template!");
 
