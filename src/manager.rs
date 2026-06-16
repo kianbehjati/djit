@@ -98,6 +98,16 @@ pub fn save(
         path,
     };
 
+    if projects["projects"]
+        .as_array()
+        .ok_or(errors::ManagerError::Value("as_array() failed".to_string()))?
+        .contains(&Value::String(new_project.django_options.name.clone()))
+    {
+        return Err(errors::ManagerError::Duplicate(
+            new_project.django_options.name.clone().to_string(),
+        )
+        .into());
+    };
     projects["projects"]
         .as_array_mut()
         .ok_or(errors::ManagerError::AsMutArrayFailed)?

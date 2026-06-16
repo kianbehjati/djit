@@ -14,6 +14,9 @@ pub enum ManagerError {
 
     #[error("can't find project's index")]
     Index,
+
+    #[error("a project with name={0} already exists.")]
+    Duplicate(String),
 }
 
 pub fn error_printer(err: Error) {
