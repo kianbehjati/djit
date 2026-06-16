@@ -9,5 +9,7 @@ serde_json = "1.0.145"
 reqwest = {version = "0.12.25", features = ["blocking"]}
 dirs = "6.0.0"
 chrono = "0.4.45"
+anyhow = "1.0.102"
+thiserror = "2.0.18"
 
 
