@@ -17,6 +17,12 @@ pub enum ManagerError {
 
     #[error("a project with name={0} already exists.")]
     Duplicate(String),
+
+    #[error("Check Internet Connectio.")]
+    Network,
+
+    #[error("Python is not installed or not found")]
+    PythonNotInstalled,
 }
 
 pub fn error_printer(err: Error) {
