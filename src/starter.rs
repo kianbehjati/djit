@@ -1,14 +1,16 @@
 use crate::check;
+use crate::errors;
 use crate::parser::DjangoOptions;
+use anyhow::{self, Context, Ok};
 use handlebars::Handlebars;
 use serde_json::json;
 use std::fs::{File, create_dir, write};
-use std::{path, process};
+use std::process;
 
-pub fn starter(res: DjangoOptions, path: String) {
+pub fn starter(res: DjangoOptions, path: String) -> anyhow::Result<()> {
     //checking Internet Connection
     if !(check::checker()) {
-        return;
+        return Err(errors::ManagerError::Network.into());
     };
 
     let apps: Vec<_> = res.apps.split(",").collect();
@@ -18,11 +20,13 @@ pub fn starter(res: DjangoOptions, path: String) {
     let sec_gen = include_str!("sec_gen.py");
     let settings_tpl = include_str!("settings.tpl");
 
-    std::env::set_current_dir(std::path::Path::new(&path));
+    std::env::set_current_dir(std::path::Path::new(&path)).context(format!("Can't switch path(does not exists or a permission issue) to {}",path))?;
 
     //write templates in given path
-    write("sec_gen.py", sec_gen).expect("Failed to write python script!");
-    write("settings.tpl", settings_tpl).expect("Failed to write settings template!");
+    write("sec_gen.py", sec_gen)
+        .context("can't write 'sec_gen.py in selected dir(check permissions)'")?;
+    write("settings.tpl", settings_tpl)
+        .context("can't write 'settings.tpl in selected dir(check permissions)'")?;
 
     // look for uv & python
     if cfg!(target_os = "windows") {
@@ -30,7 +34,7 @@ pub fn starter(res: DjangoOptions, path: String) {
         let process_c = process::Command::new("powershell")
             .args(["-c", "(Get-command uv).Path"])
             .output()
-            .expect("powershell failed");
+            .context("powershell failed")?;
         match String::from_utf8_lossy(&process_c.stdout).len() {
             0 => {
                 println!("uv not found :(");
@@ -44,11 +48,11 @@ pub fn starter(res: DjangoOptions, path: String) {
         let python_path = process::Command::new("powershell")
             .args(["-c", "(Get-command python).Path"])
             .output()
-            .expect("powershell failed");
+            .context("powershell failed")?;
         match String::from_utf8_lossy(&python_path.stdout).len() {
             0 => {
                 println!("python not installed.");
-                return;
+                return Err(errors::ManagerError::PythonNotInstalled.into());
             }
             _ => (),
         }
@@ -56,7 +60,7 @@ pub fn starter(res: DjangoOptions, path: String) {
         let process_c = process::Command::new("which")
             .args(["uv"])
             .output()
-            .expect("bash failed");
+            .context("bash shell failed")?;
         match String::from_utf8_lossy(&process_c.stdout).len() {
             0 => {
                 println!("uv not found :(");
@@ -70,11 +74,11 @@ pub fn starter(res: DjangoOptions, path: String) {
         let python_path = process::Command::new("which")
             .args(["python3"])
             .output()
-            .expect("bash shell failed");
+            .context("bash shell failed")?;
         match String::from_utf8_lossy(&python_path.stdout).len() {
             0 => {
                 println!("python not installed.");
-                return;
+                return Err(errors::ManagerError::PythonNotInstalled.into());
             }
             _ => (),
         }
@@ -87,18 +91,18 @@ pub fn starter(res: DjangoOptions, path: String) {
         process::Command::new("uv")
             .args(["venv", ".venv"])
             .output()
-            .expect("venv failed");
+            .context("venv failed")?;
         println!("Installing django with uv...");
         if cfg!(target_os = "windows") {
             process::Command::new("cmd")
                 .args(["/C", "uv pip install django python-dotenv"])
                 .output()
-                .expect("venv failed");
+                .context("venv failed")?;
         } else {
             process::Command::new("uv")
                 .args(["pip", "install", "django", "python-dotenv"])
                 .output()
-                .expect("venv failed");
+                .context("venv failed")?;
         }
     } else {
         println!("Creating virtual env...");
@@ -106,21 +110,21 @@ pub fn starter(res: DjangoOptions, path: String) {
             process::Command::new("python")
                 .args(["-m", "venv", ".venv"])
                 .output()
-                .expect("venv failed");
+                .context("venv failed")?;
             process::Command::new("cmd")
                 .args(["/C", ".venv\\Scripts\\pip.exe install django python-dotenv"])
                 .output()
-                .expect("venv failed");
+                .context("venv failed")?;
         } else {
             process::Command::new("python3")
                 .args(["-m", "venv", ".venv"])
                 .output()
-                .expect("venv failed");
+                .context("venv failed")?;
             println!("Installing django...");
             process::Command::new(".venv/bin/pip")
                 .args(["install", "django", "python-dotenv"])
                 .output()
-                .expect("venv failed / make sure that you have python3-venv installed !!!"); // will get an error bc python -m venv doesn't work in linux
+                .context("venv failed / make sure that you have python3-venv installed !!!")?; // will get an error bc python -m venv doesn't work in linux
         }
     }
 
@@ -134,12 +138,12 @@ pub fn starter(res: DjangoOptions, path: String) {
                 ".",
             ])
             .output()
-            .expect("Django App Failed.");
+            .context("Creating Django App Failed.")?;
     } else {
         process::Command::new(".venv/bin/python")
             .args(["-m", "django", "startproject", res.name.as_str(), "."])
             .output()
-            .expect("Django App Failed.");
+            .context("Creating Django App Failed.")?;
     }
 
     let mut apps_str = String::new();
@@ -152,27 +156,27 @@ pub fn starter(res: DjangoOptions, path: String) {
                 process::Command::new("cmd")
                     .args(["/C", ".venv\\Scripts\\python.exe -m django startapp", app])
                     .spawn()
-                    .expect("Starting App Failed.");
+                    .context("Starting App(s) Failed.")?;
             } else {
                 process::Command::new(".venv/bin/python")
                     .args(["-m", "django", "startapp", app])
                     .spawn()
-                    .expect("Starting App Failed.");
+                    .context("Starting App(s) Failed.")?;
             }
         }
     }
 
     //handlebars template rendering
-    let settings = File::create("settings.py").expect("Failed to Create settings.py file.");
+    let settings = File::create("settings.py").context("Failed to Create settings.py file.")?;
     let mut hb = Handlebars::new();
     hb.register_template_file("template", "./settings.tpl")
-        .expect("Failed to create template from settings.tpl in handlebars");
+        .context("Failed to create template from settings.tpl in handlebars")?;
     hb.render_to_write(
         "template",
         &json!({"app_name" : res.name.as_str(),"apps" : apps_str}),
         &settings,
     )
-    .unwrap();
+    .context("Handlebars failed to render to write template")?;
 
     let settings_path: String;
     let env_path: String;
@@ -197,48 +201,50 @@ pub fn starter(res: DjangoOptions, path: String) {
                 settings_backup.as_str(),
             ])
             .output()
-            .expect("Failed to copy backup original settings. ");
+            .context("Failed to copy backup of original settings.")?;
         process::Command::new("cmd")
             .args(["/C", "move", "settings.py", settings_path.as_str()])
             .output()
-            .expect("Failed to replace settings. ");
+            .context("Failed to replace settings.")?;
         process::Command::new("cmd")
             .args(["/C", ".venv\\Scripts\\python.exe sec_gen.py"])
             .output()
-            .expect("Failed to run .env script. ");
+            .context("Failed to run .env script.")?;
         process::Command::new("cmd")
             .args(["/C", "move", ".env", env_path.as_str()])
             .output()
-            .expect("Failed to move .env into main app. ");
+            .context("Failed to move .env into main app.")?;
     } else {
         process::Command::new("cp")
             .args([settings_path.as_str(), settings_backup.as_str()])
             .output()
-            .expect("Failed to copy backup original settings. ");
+            .context("Failed to copy backup of original settings.")?;
         process::Command::new("mv")
             .args(["settings.py", settings_path.as_str()])
             .output()
-            .expect("Failed to replace settinga. ");
+            .context("Failed to replace settings.")?;
         process::Command::new(".venv/bin/python")
             .args(["sec_gen.py"])
             .output()
-            .expect("Failed to run .env script. ");
+            .context("Failed to run .env script.")?;
         process::Command::new("mv")
             .args([".env", env_path.as_str()])
             .output()
-            .expect("Failed to move .env into main app. ");
+            .context("Failed to move .env into main app.")?;
     }
     if cfg!(target_os = "windows") {
         process::Command::new("cmd")
             .args(["/C", "del", "/Q", "settings.tpl", "sec_gen.py"])
             .spawn()
-            .expect("Failed to remove junk!");
+            .context("Failed to remove junk!")?;
     } else {
         process::Command::new("rm")
             .args(["-f", "settings.tpl", "sec_gen.py"])
             .spawn()
-            .expect("Failed to remove junk!");
+            .context("Failed to remove junk!")?;
     }
     //templates
-    create_dir("templates").expect("Failed to create 'templates'. ");
+    create_dir("templates").context("Failed to create 'templates'.")?;
+
+    return Ok(());
 }

@@ -1,0 +1,32 @@
+use anyhow::Error;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum ManagerError {
+    #[error("Home Path not found")]
+    HomePathNotFound,
+
+    #[error("as mut array failed")]
+    AsMutArrayFailed,
+
+    #[error("processing 'Value' failed: {0}")]
+    Value(String),
+
+    #[error("can't find project's index")]
+    Index,
+
+    #[error("a project with name={0} already exists.")]
+    Duplicate(String),
+
+    #[error("Check Internet Connectio.")]
+    Network,
+
+    #[error("Python is not installed or not found")]
+    PythonNotInstalled,
+}
+
+pub fn error_printer(err: Error) {
+    println!("Error: {}", err);
+    println!("Caused by: {}", err.root_cause());
+    println!("backtrace: {:?}", err.backtrace());
+}

@@ -1,9 +1,13 @@
-use std::io;
-
-mod starter;
+use std::{
+    io,
+    path::{Path, PathBuf},
+};
+use crate::parser::DjangoOptions;
 mod check;
-mod parser;
+mod errors;
 mod manager;
-fn main(){
-    unimplemented!();
+mod parser;
+mod starter;
+fn main() {
+    unimplemented!()
 }
