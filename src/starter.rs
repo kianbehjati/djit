@@ -164,6 +164,9 @@ pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow:
     if apps.len() > 1 {
         println!("Creating Apps...");
         for app in apps {
+            // single app = "app1,"
+            if app.len() == 0 {continue};
+
             apps_str.push_str(&format!(", \"{}\"", app));
             if cfg!(target_os = "windows") {
                 process::Command::new("cmd")
