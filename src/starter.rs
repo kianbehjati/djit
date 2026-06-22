@@ -1,13 +1,16 @@
 use crate::check;
 use crate::errors;
+use crate::manager;
 use crate::parser::DjangoOptions;
-use anyhow::{self, Context, Ok};
+use anyhow::{self, Context};
 use handlebars::Handlebars;
 use serde_json::json;
 use std::fs::{File, create_dir, write};
+use std::path::Path;
+use std::path::PathBuf;
 use std::process;
 
-pub fn starter(res: DjangoOptions, path: String) -> anyhow::Result<()> {
+pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow::Result<()> {
     //checking Internet Connection
     if !(check::checker()) {
         return Err(errors::ManagerError::Network.into());
@@ -20,7 +23,10 @@ pub fn starter(res: DjangoOptions, path: String) -> anyhow::Result<()> {
     let sec_gen = include_str!("sec_gen.py");
     let settings_tpl = include_str!("settings.tpl");
 
-    std::env::set_current_dir(std::path::Path::new(&path)).context(format!("Can't switch path(does not exists or a permission issue) to {}",path))?;
+    std::env::set_current_dir(std::path::Path::new(&path)).context(format!(
+        "Can't switch path(does not exists or a permission issue) to {}",
+        path
+    ))?;
 
     //write templates in given path
     write("sec_gen.py", sec_gen)
@@ -246,5 +252,17 @@ pub fn starter(res: DjangoOptions, path: String) -> anyhow::Result<()> {
     //templates
     create_dir("templates").context("Failed to create 'templates'.")?;
 
+    //save to projects.json
+    match manager::list() {
+        Ok(mut p) => {
+            match manager::save(res, description, PathBuf::from(path), &mut p) {
+                Ok(()) => {}
+                Err(e) => errors::error_printer(e),
+            };
+        }
+        Err(e) => {
+            errors::error_printer(e);
+        }
+    }
     return Ok(());
 }
