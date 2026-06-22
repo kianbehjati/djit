@@ -4,8 +4,10 @@ use anyhow::{self, Context, Ok};
 use chrono::NaiveDateTime;
 use dirs;
 use serde_json::{self, Value};
+use std::fs;
 use std::io::{Read, Write};
 use std::path::PathBuf;
+use trash;
 pub struct DjangoProject {
     pub django_options: DjangoOptions,
     pub date: NaiveDateTime,
@@ -133,7 +135,12 @@ pub fn save(
     return Ok(());
 }
 
-pub fn delete(name: String, path: PathBuf, projects: &mut Value) -> anyhow::Result<()> {
+pub fn delete(
+    name: String,
+    path: PathBuf,
+    projects: &mut Value,
+    permanent: bool,
+) -> anyhow::Result<()> {
     // delete from list
     let index = projects["projects"]
         .as_array()
@@ -147,13 +154,18 @@ pub fn delete(name: String, path: PathBuf, projects: &mut Value) -> anyhow::Resu
         projects["projects"].as_array_mut().unwrap().remove(index);
     }
 
+    //delete from disk
+    if permanent {
+        fs::remove_dir_all(path)?
+    } else {
+        trash::delete(path)?;
+    }
+
     // delete from file(projects.json)
     let path = dirs::home_dir()
         .ok_or(errors::ManagerError::HomePathNotFound)?
         .join(".djit")
         .join("projects.json");
-
-    // todo : add delete from disk
 
     let mut file = std::fs::File::create(&path)?;
     let json_string = serde_json::to_string(&projects)?;
