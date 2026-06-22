@@ -136,7 +136,7 @@ pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow:
 
     println!("Creating Django Project...");
     if cfg!(target_os = "windows") {
-        process::Command::new("cmd")
+        let output = process::Command::new("cmd")
             .args([
                 "/C",
                 ".venv\\Scripts\\python.exe -m django startproject",
@@ -145,11 +145,18 @@ pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow:
             ])
             .output()
             .context("Creating Django App Failed.")?;
+        if String::from_utf8_lossy(&output.stderr).contains("not a valid project name") {
+            return Err(errors::ManagerError::NotValidProjectName(res.name).into());
+        }
+
     } else {
-        process::Command::new(".venv/bin/python")
+        let output = process::Command::new(".venv/bin/python")
             .args(["-m", "django", "startproject", res.name.as_str(), "."])
             .output()
             .context("Creating Django App Failed.")?;
+        if String::from_utf8_lossy(&output.stderr).contains("not a valid project name") {
+            return Err(errors::ManagerError::NotValidProjectName(res.name).into());
+        }
     }
 
     let mut apps_str = String::new();
