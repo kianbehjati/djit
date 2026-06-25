@@ -18,14 +18,14 @@ pub enum ManagerError {
     #[error("a project with name={0} already exists.")]
     Duplicate(String),
 
-    #[error("Check Internet Connectio.")]
-    Network,
+    #[error("Check Internet Connection : {0}.")]
+    Network(String),
 
     #[error("Python is not installed or not found")]
     PythonNotInstalled,
 
     #[error("{0} is not a valid project name")]
-    NotValidProjectName(String)
+    NotValidProjectName(String),
 }
 
 pub fn error_printer(err: Error) {

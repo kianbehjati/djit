@@ -13,7 +13,7 @@ use std::process;
 pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow::Result<()> {
     //checking Internet Connection
     if !(check::checker()) {
-        return Err(errors::ManagerError::Network.into());
+        return Err(errors::ManagerError::Network("Can't reach google.com".into()).into());
     };
 
     let apps: Vec<_> = res.apps.split(",").collect();
@@ -165,7 +165,9 @@ pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow:
         println!("Creating Apps...");
         for app in apps {
             // single app = "app1,"
-            if app.len() == 0 {continue};
+            if app.len() == 0 {
+                continue;
+            };
 
             apps_str.push_str(&format!(", \"{}\"", app));
             if cfg!(target_os = "windows") {
