@@ -2,7 +2,7 @@ use anyhow::{self, Context};
 use handlebars;
 use reqwest::blocking::get;
 use serde_json::{self, json};
-use std::{fs::{self}, process};
+use std::{fs::{self}, io::Read, process::{self, Stdio}};
 use crate::errors;
 
 pub enum DB_Type {
@@ -150,19 +150,18 @@ pub fn start_docker(python: Tag, db: Option<DB_Type>, db_tag: Option<Tag>, db_op
     fs::remove_file("./Dockerfile.tpl").context("can't clean Dockerfile.tpl")?;
 
     //docker-compose up
-    let compose_up = process::Command::new("docker")
+    let mut compose_up = process::Command::new("docker")
         .args(["compose","up","-d"])
-        .output()
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()
         .context("Failed to run docker-compose up")?;
 
-    let docker_not_running = "check if the path is correct and if the daemon is running";
+    let status = compose_up.wait()?;
     
-    let error = String::from_utf8_lossy(&compose_up.stderr);
-
-    if error.contains(docker_not_running) {
-        return Err(errors::ManagerError::Docker(format!("Docker engine is not runnning! : {}",error).into()).into());
+    if !(status.success()) {
+        return Err(errors::ManagerError::Docker("Docker engine is not runnning! or failed to connect to docker".into()).into());
     }
-    println!("{}",String::from_utf8_lossy(&compose_up.stderr));
-    
+
     return Ok(());
 }
