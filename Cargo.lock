@@ -243,6 +243,7 @@ dependencies = [
  "dirs",
  "handlebars",
  "reqwest",
+ "serde",
  "serde_json",
  "thiserror",
  "trash",

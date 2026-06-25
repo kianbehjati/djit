@@ -4,6 +4,7 @@ use std::{
 };
 use crate::parser::DjangoOptions;
 mod check;
+mod docker;
 mod errors;
 mod manager;
 mod parser;
