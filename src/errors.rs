@@ -26,6 +26,9 @@ pub enum ManagerError {
 
     #[error("{0} is not a valid project name")]
     NotValidProjectName(String),
+
+    #[error("docker failed : {0}")]
+    Docker(String)
 }
 
 pub fn error_printer(err: Error) {

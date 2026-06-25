@@ -149,5 +149,20 @@ pub fn start_docker(python: Tag, db: Option<DB_Type>, db_tag: Option<Tag>, db_op
     fs::remove_file("./docker-compose.tpl").context("can't clean docker-compose.tpl")?;
     fs::remove_file("./Dockerfile.tpl").context("can't clean Dockerfile.tpl")?;
 
+    //docker-compose up
+    let compose_up = process::Command::new("docker")
+        .args(["compose","up","-d"])
+        .output()
+        .context("Failed to run docker-compose up")?;
+
+    let docker_not_running = "check if the path is correct and if the daemon is running";
+    
+    let error = String::from_utf8_lossy(&compose_up.stderr);
+
+    if error.contains(docker_not_running) {
+        return Err(errors::ManagerError::Docker(format!("Docker engine is not runnning! : {}",error).into()).into());
+    }
+    println!("{}",String::from_utf8_lossy(&compose_up.stderr));
+    
     return Ok(());
 }
