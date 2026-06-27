@@ -9,6 +9,7 @@ mod errors;
 mod manager;
 mod parser;
 mod starter;
+mod packageinstaller;
 fn main() {
     unimplemented!()
 }
