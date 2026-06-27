@@ -6,11 +6,27 @@ use anyhow::{self, Context};
 use handlebars::Handlebars;
 use serde_json::json;
 use std::fs::{File, create_dir, write};
-use std::path::Path;
 use std::path::PathBuf;
 use std::process;
+use crate::docker;
+use crate::packageinstaller;
 
-pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow::Result<()> {
+pub fn starter(
+    res: DjangoOptions,
+    description: String, 
+    path: String, 
+    use_docker:bool,
+    db_type: Option<docker::DB_Type>, 
+    db_option: Option<docker::DB_Options>,
+    db_host: String,
+    python_tag: docker::Tag,
+    db_tag: Option<docker::Tag>
+) -> anyhow::Result<()> {
+    /*
+        todo:
+            - make this mess more readable
+    */
+
     //checking Internet Connection
     if !(check::checker()) {
         return Err(errors::ManagerError::Network("Can't reach google.com".into()).into());
@@ -22,6 +38,23 @@ pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow:
     // embeding files into binary
     let sec_gen = include_str!("sec_gen.py");
     let settings_tpl = include_str!("settings.tpl");
+    let compose_tpl = include_str!("docker-compose.tpl");
+    let dockerfile_tpl = include_str!("Dockerfile.tpl");
+
+    //handling DB
+    let mut is_postgres: bool = false;
+    let db_option = db_option.unwrap_or(docker::DB_Options { db_name:"".into(), db_password: "".into(), db_user: "".into() });
+    let default_db = match db_type.clone() {
+        Some(db) => {
+            match db {
+                docker::DB_Type::Mysql => {is_postgres = false},
+                docker::DB_Type::Postgresql => {is_postgres = true}
+            };
+            false
+        },
+        None => true
+    };
+
 
     std::env::set_current_dir(std::path::Path::new(&path)).context(format!(
         "Can't switch path(does not exists or a permission issue) to {}",
@@ -91,25 +124,25 @@ pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow:
     }
 
     // init command chain
-
+    let mut packages: Vec<&str> = Vec::from(["django","python-dotenv"]);
+    if is_postgres {
+        packages.push("psycopg[binary]");
+    } else if !(is_postgres) & !(default_db) {
+        packages.push("mysqlclient");
+    }
     if is_uv {
         println!("Creating virtual env with uv...");
         process::Command::new("uv")
             .args(["venv", ".venv"])
             .output()
             .context("venv failed")?;
-        println!("Installing django with uv...");
-        if cfg!(target_os = "windows") {
-            process::Command::new("cmd")
-                .args(["/C", "uv pip install django python-dotenv"])
-                .output()
-                .context("venv failed")?;
-        } else {
-            process::Command::new("uv")
-                .args(["pip", "install", "django", "python-dotenv"])
-                .output()
-                .context("venv failed")?;
+        println!("Installing packages with uv...");
+        
+        match packageinstaller::install(packages, is_uv) {
+            Ok(()) => {},
+            Err(e) => errors::error_printer(e)
         }
+    
     } else {
         println!("Creating virtual env...");
         if cfg!(target_os = "windows") {
@@ -117,20 +150,20 @@ pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow:
                 .args(["-m", "venv", ".venv"])
                 .output()
                 .context("venv failed")?;
-            process::Command::new("cmd")
-                .args(["/C", ".venv\\Scripts\\pip.exe install django python-dotenv"])
-                .output()
-                .context("venv failed")?;
+            match packageinstaller::install(packages, is_uv) {
+                Ok(()) => {},
+                Err(e) => return Err(e)
+            }
         } else {
             process::Command::new("python3")
                 .args(["-m", "venv", ".venv"])
                 .output()
                 .context("venv failed")?;
-            println!("Installing django...");
-            process::Command::new(".venv/bin/pip")
-                .args(["install", "django", "python-dotenv"])
-                .output()
-                .context("venv failed / make sure that you have python3-venv installed !!!")?; // will get an error bc python -m venv doesn't work in linux
+            println!("Installing packages...");
+            match packageinstaller::install(packages, is_uv) {
+                Ok(()) => {},
+                Err(e) => return Err(e)
+            }
         }
     }
 
@@ -191,15 +224,24 @@ pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow:
         .context("Failed to create template from settings.tpl in handlebars")?;
     hb.render_to_write(
         "template",
-        &json!({"app_name" : res.name.as_str(),"apps" : apps_str}),
+        &json!({
+            "app_name" : res.name.as_str(),
+            "apps" : apps_str,
+            "default_db": default_db, //default db determines to use SQLite or other DBs(Postgres,Mysql)
+            "is_postgres": is_postgres,
+            "db_host": if (use_docker) {"db"} else {db_host.as_str()},
+            "db_option": db_option
+        }),
         &settings,
     )
     .context("Handlebars failed to render to write template")?;
 
+
+    //handling settings.py/.bkp
     let settings_path: String;
     let env_path: String;
     let settings_backup: String;
-
+    
     if cfg!(target_os = "windows") {
         settings_path = res.name.clone() + "\\" + "settings.py";
         env_path = res.name.clone() + "\\" + ".env";
@@ -225,7 +267,7 @@ pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow:
             .output()
             .context("Failed to replace settings.")?;
         process::Command::new("cmd")
-            .args(["/C", ".venv\\Scripts\\python.exe sec_gen.py"])
+            .args(["/C", &format!(".venv\\Scripts\\python.exe sec_gen.py {}",db_option.db_password)])
             .output()
             .context("Failed to run .env script.")?;
         process::Command::new("cmd")
@@ -242,7 +284,7 @@ pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow:
             .output()
             .context("Failed to replace settings.")?;
         process::Command::new(".venv/bin/python")
-            .args(["sec_gen.py"])
+            .args([&format!("sec_gen.py {}",db_option.db_password)])
             .output()
             .context("Failed to run .env script.")?;
         process::Command::new("mv")
@@ -261,9 +303,28 @@ pub fn starter(res: DjangoOptions, description: String, path: String) -> anyhow:
             .spawn()
             .context("Failed to remove junk!")?;
     }
+
+
     //templates
     create_dir("templates").context("Failed to create 'templates'.")?;
 
+    //requirements.txt
+    match packageinstaller::requirements(is_uv) {
+        Ok(()) => {}
+        Err(e) => return Err(e)
+    }
+
+    //handle docker
+    if use_docker {
+        docker::start_docker(
+            python_tag, 
+            db_type, // in docker.rs this field determines use_db
+            db_tag, 
+            Some(db_option), 
+            compose_tpl,
+            dockerfile_tpl
+        )?;
+    }
     //save to projects.json
     match manager::list() {
         Ok(mut p) => {
