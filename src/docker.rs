@@ -5,6 +5,7 @@ use serde_json::{self, json};
 use std::{fs::{self}, io::Read, process::{self, Stdio}};
 use crate::errors;
 
+#[derive(Clone)]
 pub enum DB_Type {
     Postgresql,
     Mysql,
@@ -79,17 +80,14 @@ pub fn get_db(db: DB_Type) -> anyhow::Result<Vec<Tag>> {
     return Ok(tags);
 }
 
-pub fn start_docker(python: Tag, db: Option<DB_Type>, db_tag: Option<Tag>, db_option: Option<DB_Options>) -> anyhow::Result<()> {
+pub fn start_docker(python: Tag, db: Option<DB_Type>, db_tag: Option<Tag>, db_option: Option<DB_Options>, compose_tpl:&str ,dockerfile_tpl:&str) -> anyhow::Result<()> {
     /*
         to do:
             - health check django project
     */
 
     let mut handlebars = handlebars::Handlebars::new();
-    
-    let compose_tpl = include_str!("docker-compose.tpl");
-    let dockerfile_tpl = include_str!("Dockerfile.tpl");
-
+ 
     let mut is_postgres:bool = false;
     let mut is_mysql:bool = false;
     
