@@ -10,6 +10,8 @@ use std::path::PathBuf;
 use std::process;
 use crate::docker;
 use crate::packageinstaller;
+use owo_colors::OwoColorize;
+use owo_colors::colors::*;
 
 pub fn starter(
     res: DjangoOptions,
@@ -22,12 +24,7 @@ pub fn starter(
     python_tag: docker::Tag,
     db_tag: Option<docker::Tag>
 ) -> anyhow::Result<()> {
-    /*
-        todo:
-            - make this mess more readable
-    */
-
-    //checking Internet Connection
+    
     if !(check::checker()) {
         return Err(errors::ManagerError::Network("Can't reach google.com".into()).into());
     };
@@ -54,7 +51,14 @@ pub fn starter(
         },
         None => true
     };
-
+    let mut steps: u8 = 4;
+    let mut process_counter: u8 = 1;
+    if apps.len() > 1 {
+        steps += 1;
+    }
+    if use_docker {
+        steps += 1;
+    }
 
     std::env::set_current_dir(std::path::Path::new(&path)).context(format!(
         "Can't switch path(does not exists or a permission issue) to {}",
@@ -76,13 +80,15 @@ pub fn starter(
             .context("powershell failed")?;
         match String::from_utf8_lossy(&process_c.stdout).len() {
             0 => {
-                println!("uv not found :(");
+                println!("[{}/{}] uv {} found :(",process_counter,steps , "not".fg::<Red>().underline());
             }
             _ => {
-                println!("uv installed :>");
+                println!("[{}/{}] uv is {} :>",process_counter,steps , "installed".fg::<Green>().underline());
                 is_uv = true;
             }
         }
+        process_counter += 1;
+
         //check python
         let python_path = process::Command::new("powershell")
             .args(["-c", "(Get-command python).Path"])
@@ -90,7 +96,7 @@ pub fn starter(
             .context("powershell failed")?;
         match String::from_utf8_lossy(&python_path.stdout).len() {
             0 => {
-                println!("python not installed.");
+                println!("{}","python not installed.".fg::<Red>().underline());
                 return Err(errors::ManagerError::PythonNotInstalled.into());
             }
             _ => (),
@@ -102,13 +108,14 @@ pub fn starter(
             .context("bash shell failed")?;
         match String::from_utf8_lossy(&process_c.stdout).len() {
             0 => {
-                println!("uv not found :(");
+                println!("[{}/{}] uv {} found :(",process_counter,steps , "not".fg::<Red>().underline());
             }
             _ => {
-                println!("uv installed :>");
+                println!("[{}/{}] uv is {} :>",process_counter,steps , "installed".fg::<Green>().underline());
                 is_uv = true;
             }
         }
+        process_counter += 1;
 
         let python_path = process::Command::new("which")
             .args(["python3"])
@@ -116,7 +123,7 @@ pub fn starter(
             .context("bash shell failed")?;
         match String::from_utf8_lossy(&python_path.stdout).len() {
             0 => {
-                println!("python not installed.");
+                println!("{}","python not installed.".fg::<Red>().underline());
                 return Err(errors::ManagerError::PythonNotInstalled.into());
             }
             _ => (),
@@ -131,43 +138,49 @@ pub fn starter(
         packages.push("mysqlclient");
     }
     if is_uv {
-        println!("Creating virtual env with uv...");
+        println!("[{}/{}] Creating virtual {} with uv...",process_counter,steps,"env".fg::<Green>().underline());
         process::Command::new("uv")
             .args(["venv", ".venv"])
             .output()
             .context("venv failed")?;
-        println!("Installing packages with uv...");
-        
+        process_counter += 1;
+        println!("[{}/{}] {} packages with uv...",process_counter,steps,"Installing".fg::<Green>().underline());
+        process_counter += 1;
         match packageinstaller::install(packages, is_uv) {
             Ok(()) => {},
             Err(e) => errors::error_printer(e)
         }
     
     } else {
-        println!("Creating virtual env...");
+        println!("[{}/{}] Creating virtual {} ...",process_counter ,steps,"env".fg::<Green>().underline());
         if cfg!(target_os = "windows") {
             process::Command::new("python")
                 .args(["-m", "venv", ".venv"])
                 .output()
                 .context("venv failed")?;
+            process_counter += 1;
+            println!("[{}/{}] {} packages...",process_counter ,steps,"Installing".fg::<Green>().underline());
             match packageinstaller::install(packages, is_uv) {
                 Ok(()) => {},
                 Err(e) => return Err(e)
             }
+            process_counter += 1;
         } else {
             process::Command::new("python3")
                 .args(["-m", "venv", ".venv"])
                 .output()
                 .context("venv failed")?;
-            println!("Installing packages...");
+            process_counter += 1;
+            println!("[{}/{}] {} packages...",process_counter ,steps,"Installing".fg::<Green>().underline());
             match packageinstaller::install(packages, is_uv) {
                 Ok(()) => {},
                 Err(e) => return Err(e)
             }
+            process_counter += 1;
         }
     }
 
-    println!("Creating Django Project...");
+    println!("[{}/{}] Creating {}{} Project...",process_counter ,steps,"Dja".fg::<Red>(),"ngo".fg::<Green>());
     if cfg!(target_os = "windows") {
         let output = process::Command::new("cmd")
             .args([
@@ -191,11 +204,12 @@ pub fn starter(
             return Err(errors::ManagerError::NotValidProjectName(res.name).into());
         }
     }
+    process_counter += 1;
 
     let mut apps_str = String::new();
 
     if apps.len() > 1 {
-        println!("Creating Apps...");
+        println!("[{}/{}] {} Apps...",process_counter ,steps,"Creating".fg::<Green>().underline());
         for app in apps {
             // single app = "app1,"
             if app.len() == 0 {
@@ -216,6 +230,7 @@ pub fn starter(
             }
         }
     }
+    process_counter += 1;
 
     //handlebars template rendering
     let settings = File::create("settings.py").context("Failed to Create settings.py file.")?;
@@ -316,6 +331,7 @@ pub fn starter(
 
     //handle docker
     if use_docker {
+        println!("[{}/{}] Handling {}...",process_counter ,steps,"Docker".fg::<Blue>().underline());
         docker::start_docker(
             python_tag, 
             db_type, // in docker.rs this field determines use_db

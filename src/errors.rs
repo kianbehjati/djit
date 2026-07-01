@@ -15,7 +15,7 @@ pub enum ManagerError {
     #[error("can't find project's index")]
     Index,
 
-    #[error("a project with name={0} already exists.")]
+    #[error("a project with name={0} already exists, Ignore the Error if you are not usinng manage command.")]
     Duplicate(String),
 
     #[error("Check Internet Connection : {0}.")]
