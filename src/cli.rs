@@ -5,7 +5,7 @@ use owo_colors::OwoColorize;
 use owo_colors::colors::css::Black;
 use owo_colors::colors::xterm::FernGreen;
 use owo_colors::colors::*;
-use anyhow;
+use anyhow::{Context};
 use crate::{docker, errors};
 use crate::docker::{DB_Options, DB_Type, Tag};
 use rfd;
@@ -69,6 +69,19 @@ fn starter() -> anyhow::Result<()>{
     let mut db_host: String = String::new();
     let mut python_tag: Tag = Tag { version: String::new(), tag_status: String::new() };
     let mut db_tag: Tag = Tag { version: String::new(), tag_status: String::new() };
+    // check for projects.json
+    let config_path = dirs::home_dir()
+        .ok_or(errors::ManagerError::HomePathNotFound)?
+        .join(".djit")
+        .join("projects.json");
+    if !(config_path.exists()) {
+        std::fs::create_dir_all(config_path.parent().unwrap())
+            .context("Failed to create .djit directory in home dir")?;
+        std::fs::File::create(&config_path)
+            .context("Failed to create projects.json file in .djit directory")?;
+        std::fs::write(&config_path, "{\"projects\": []}")
+            .context("Failed to write initial content to projects.json file")?;
+    };
     //project name 
     print!("Project name[{}]: ","a-z".fg::<BrightBlue>());
     io::stdout().flush()?;
@@ -188,6 +201,10 @@ fn starter() -> anyhow::Result<()>{
         .as_str() {
             // todo : merge the code for "y" and "" since they are the same
             "y" => {
+                match docker::check_docker() {
+                    Ok(()) => {},
+                    Err(e) => return Err(e)
+                }
                 // python tag
                 let pythons = match docker::get_python() {
                     Ok(tags) => tags,
@@ -224,13 +241,18 @@ fn starter() -> anyhow::Result<()>{
                             print!("Select a Mysql version from dockerHub [{}]:",tags_str.fg::<Blue>());
                         }
                     }
+                    io::stdout().flush()?;
+                    io::stdin().read_line(&mut db_tag.version)?;
                 }
-                io::stdout().flush()?;
-                io::stdin().read_line(&mut db_tag.version)?;
+                
                 use_docker = true;
             }
             "n" => {use_docker = false;}
             "" => {
+                match docker::check_docker() {
+                    Ok(()) => {},
+                    Err(e) => return Err(e)
+                }
                 let pythons = match docker::get_python() {
                     Ok(tags) => tags,
                     Err(e) => return Err(e)
@@ -264,9 +286,10 @@ fn starter() -> anyhow::Result<()>{
                             print!("Select a Mysql version from dockerHub [{}]: ",tags_str.fg::<Blue>());
                         }
                     }
+                    io::stdout().flush()?;
+                    io::stdin().read_line(&mut db_tag.version)?;
                 }
-                io::stdout().flush()?;
-                io::stdin().read_line(&mut db_tag.version)?;
+                
                 use_docker = true;
             }
             _ => panic!("Invalid input for Dockerize, type y or n.")

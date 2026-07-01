@@ -163,3 +163,19 @@ pub fn start_docker(python: Tag, db: Option<DB_Type>, db_tag: Option<Tag>, db_op
 
     return Ok(());
 }
+pub fn check_docker() -> anyhow::Result<()> {
+    let mut docker_check = process::Command::new("docker")
+        .args(["info"])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .context("Failed to run docker info")?;
+
+    let status = docker_check.wait()?;
+    
+    if !(status.success()) {
+        return Err(errors::ManagerError::Docker("Docker engine is not runnning! or failed to connect to docker".into()).into());
+    }
+
+    return Ok(());
+}
