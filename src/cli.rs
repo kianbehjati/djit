@@ -1,5 +1,5 @@
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use clap::{Parser, Subcommand};
 use owo_colors::OwoColorize;
 use owo_colors::colors::css::Black;
@@ -10,7 +10,7 @@ use crate::{docker, errors};
 use crate::docker::{DB_Options, DB_Type, Tag};
 use rfd;
 use crate::starter;
-
+use crate::manager;
 #[derive(Parser)]
 #[command(name = "djit")]
 #[command(about = "Djit automates Django project setup, so you can start building instead of configuring.", long_about = None)]
@@ -34,7 +34,7 @@ pub fn cli() {
     /*
     todo
         - follow the user flow ✅
-        - before each action check requirements(e.g docker running, existence of projects.json, etc.) 
+        - before each action check requirements(e.g docker running, existence of projects.json, etc.) ✅
         - askfileopen for path in starter ✅
         - define stacks(minimal, worker, api) 
         - make cli modern and beautiful(indicatif) 
@@ -55,8 +55,92 @@ pub fn cli() {
     }
 }
 
-fn manager() {
-    unimplemented!()
+fn manager() -> anyhow::Result<()> {
+    loop {
+        let mut input = String::new();
+        print!("Select an Option to start[({})ist, ({})elete, ({})uit]: ","L".fg::<BrightBlue>().bold().underline(),"D".fg::<Red>().bold() ,"Q".fg::<BrightMagenta>().bold());
+        io::stdout().flush()?;
+        io::stdin().read_line(&mut input)?;
+        match input.trim().to_lowercase().as_str() {
+            "l" => {
+                match manager::list() {
+                    Ok(projects) => {
+                        println!("Projects:");
+                        for project in projects["projects"].as_array().ok_or(errors::ManagerError::Value("As Array Failed".into()))? {
+                            let project_data = projects[project
+                                .as_str()
+                                .ok_or(errors::ManagerError::Value("as_str() failed".to_string()))?]
+                                .clone();
+                            println!("Name: {}", project
+                                .as_str()
+                                .ok_or(errors::ManagerError::Value("as_str() failed".to_string()))?
+                                .to_string().fg::<Blue>());
+                            println!("Apps: {}", project_data["apps"]
+                                .as_str()
+                                .ok_or(errors::ManagerError::Value("as_str() failed".to_string()))?
+                                .to_string().fg::<Cyan>());
+                            println!("description: {}",project_data["description"]
+                                .as_str()
+                                .ok_or(errors::ManagerError::Value("as_str() failed".to_string()))?
+                                .to_string().fg::<Green>());
+                            println!("Path: {}", project_data["path"]
+                                .as_str()
+                                .ok_or(errors::ManagerError::Value("as_str() failed".to_string()))?
+                                .to_string().fg::<Yellow>());
+                            println!("Date: {}", project_data["date"]
+                                .as_str()
+                                .ok_or(errors::ManagerError::Value("as_str() failed".to_string()))?
+                                .to_string().fg::<Magenta>());
+                            println!("---------------------------");
+                        }
+                    }
+                    Err(e) => {errors::error_printer(e);}
+                }
+            },
+            "d" => {
+                let mut project_name = String::new();
+                let mut project_path = String::new();
+                let mut _permanent = String::new();
+                let delete_permanent: bool;
+                print!("{} of the project you want to {}: ","Name".fg::<Blue>().underline().italic(),"Delete".fg::<Red>().bold().underline());
+                io::stdout().flush()?;
+                io::stdin().read_line(&mut project_name)?;
+
+                print!("{} of the project you want to {}: ","Path".fg::<Yellow>().underline().italic(),"Delete".fg::<Red>().bold().underline());
+                io::stdout().flush()?;
+                io::stdin().read_line(&mut project_path)?;
+
+                print!("Do you want to delete the project permanently? ({}/{}): ","y".fg::<Red>().bold().underline(),"n".fg::<Green>());
+                io::stdout().flush()?;
+                io::stdin().read_line(&mut _permanent)?;
+                match _permanent
+                    .trim()
+                    .to_lowercase()
+                    .chars()
+                    .next()
+                    .unwrap_or('d') {
+                        'y' => {delete_permanent = true;}
+                        'n' => {delete_permanent = false;}
+                        _ => {panic!("Invalid input for delete permanently, type y or n.")}
+                    } 
+                match manager::list() {
+                    Ok(mut projects) => {
+                        match manager::delete(project_name.trim().into(),PathBuf::from(project_path.trim()),&mut projects,delete_permanent) {
+                            Ok(()) => {println!("Project deleted successfully.");}
+                            Err(e) => {errors::error_printer(e);}
+                        }
+                    }
+                    Err(e) => {errors::error_printer(e);}
+                }
+            }
+            "q" => {
+                println!("{}","Exiting...".fg::<BrightMagenta>().bold().underline()); 
+                break;
+            }
+            _ => {println!("Invalid option. Please select (L), (D), or (Q).");}
+        }
+    }
+    return Ok(());
 }
 fn starter() -> anyhow::Result<()>{
     let mut project_name: String = String::new();
