@@ -15,8 +15,8 @@ pub fn install(packages: Vec<&str>, is_uv:bool) -> anyhow::Result<()>{
                 .output()
                 .context("failed to install packages")?;
         }else {
-            let install_out = process::Command::new("uv")
-                .arg(format!("pip install{}",&packages_str.as_str()).as_str())
+            let install_out = process::Command::new("sh")
+                .args(["-c",format!("uv pip install{}",&packages_str.as_str()).as_str()])
                 .output()
                 .context("failed to install packages")?;
         }
@@ -28,8 +28,8 @@ pub fn install(packages: Vec<&str>, is_uv:bool) -> anyhow::Result<()>{
                 .output()
                 .context("failed to install packages")?;
         }else {
-            let install_out = process::Command::new("./venv/bin/pip")
-                .arg(format!("install{}",&packages_str.as_str()).as_str())
+            let install_out = process::Command::new("sh")
+                .args(["-c",format!("./venv/bin/pip install{}",&packages_str.as_str()).as_str()])
                 .output()
                 .context("failed to install packages")?;
         }
@@ -47,8 +47,8 @@ pub fn requirements(is_uv: bool) -> anyhow::Result<()> {
                 .context("failed to create requirements.txt with uv")
                 ?;
         } else {
-            process::Command::new("uv")
-                .args(["pip","freeze",">","requirements.txt"])
+            process::Command::new("sh")
+                .args(["-c","uv pip freeze > requirements.txt"])
                 .output()
                 .context("failed to create requirements.txt with uv")?;
         }
@@ -59,8 +59,8 @@ pub fn requirements(is_uv: bool) -> anyhow::Result<()> {
                 .output()
                 .context("failed to create requirements.txt")?;
         } else {
-            process::Command::new(".venv/bin/pip")
-                .args(["freeze",">","requirements.txt"])
+            process::Command::new("sh")
+                .args(["-c",".venv/bin/pip freeze > requirements.txt"])
                 .output()
                 .context("failed to create requirements.txt with uv")?;
         }

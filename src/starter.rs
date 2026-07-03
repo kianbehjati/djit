@@ -299,7 +299,7 @@ pub fn starter(
             .output()
             .context("Failed to replace settings.")?;
         process::Command::new(".venv/bin/python")
-            .args([&format!("sec_gen.py {}",db_option.db_password)])
+            .args(["sec_gen.py", db_option.db_password.as_str()])
             .output()
             .context("Failed to run .env script.")?;
         process::Command::new("mv")
