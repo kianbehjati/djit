@@ -7,5 +7,5 @@ mod starter;
 mod packageinstaller;
 mod cli;
 fn main() {
-    unimplemented!()
+    cli::cli();
 }
