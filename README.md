@@ -37,12 +37,40 @@ Options:
 > [!TIP]
 > apps format is app1,app2,app3,... Seperate apps with "," and don't use [],(),"",{} (e.g "users,")
 
+<br>
+
 <h1> Install </h1>
 
 1. Download the `djit` binary from [Releases tab](https://github.com/kianbehjati/djit/releases/latest).
      - Alway get latest release
 
 2. add binrary to PATH (Optional)
+
+<br>
+
+<h1> Dockerize </h1>
+
+you can dockerize you django project and link selected db and django app through docker-compose with just one click 
+```
+djit.exe start
+...
+...
+...
+Dockerize(Y/n): (note that default is Y)
+```
+
+
+> [!NOTE]
+> If you select a DB(MySql | PostgreSQL) docker compose will preform a health check of db before running your django app
+
+
+> [!TIP]
+> Select Sqlite if you don't want to dockerize you DB.
+
+> [!CAUTION]
+> Make sure that docker engine is running and you have docker compose.
+
+<br>
 
 <h1> Community </h1>
 
