@@ -2,10 +2,9 @@
 
 `idea behind djit is to make startup/manage process easy for Django Developers`
 
-1. Preferred Contributions
+- Preferred Contributions
+  
     - **Bug Fixes & New Features**
-
-**_These are our primary focus._**
 
 ## Minimalism First
 Code must be concise, clear, and minimal.
@@ -15,8 +14,7 @@ Code must be concise, clear, and minimal.
     - **Over-Engineering**
       
       - We will **reject** unnecessary encapsulation, excessive abstraction, or complex architectural refactoring.
-        Please remember this is research-oriented code, not a commercial enterprise project.
-    
+
     - **Style Tweaks**
         - PRs solely for formatting, beautification, or non-functional style adjustments will be rejected.
 
