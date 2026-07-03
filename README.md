@@ -50,7 +50,7 @@ Options:
 
 <h1> Dockerize </h1>
 
-you can dockerize you django project and link selected db and django app through docker-compose with just one click 
+you can dockerize your django project and link selected db and django app through docker-compose with just one click 
 ```
 djit.exe start
 ...
