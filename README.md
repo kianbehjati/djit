@@ -7,7 +7,7 @@
 </p>
 <br>
 <div align=center>
-  <img alt="Static Badge" src="https://img.shields.io/badge/Release-0.7.5-blue?link=https%3A%2F%2Fgithub.com%2Fkianbehjati%2Fdjit%2Freleases%2Ftag%2F0.1.0">
+  <img alt="Static Badge" src="https://img.shields.io/badge/Release-0.7.6-blue?link=https%3A%2F%2Fgithub.com%2Fkianbehjati%2Fdjit%2Freleases%2Ftag%2F0.1.0">
   <img alt="Static Badge" src="https://img.shields.io/badge/License-Apache_2-red?link=https%3A%2F%2Fgithub.com%2Fkianbehjati%2Fdjit%2Ftree%2Fmain%23Apache-2.0-1-ov-file">
   <img alt="Static Badge" src="https://img.shields.io/badge/Build-passing-green">
 </div>
