@@ -39,6 +39,10 @@ Options:
 
 <br>
 
+<img width="1920" height="1032" alt="showcase" src="https://github.com/user-attachments/assets/241bd234-4abb-4eff-8458-5855710a5480" />
+
+<br>
+
 <h1> Install </h1>
 
 1. Download the `djit` binary from [Releases tab](https://github.com/kianbehjati/djit/releases/latest).
