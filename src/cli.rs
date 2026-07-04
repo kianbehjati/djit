@@ -386,7 +386,17 @@ fn starter() -> anyhow::Result<()>{
         .pick_folder();
     match file {
         Some(p) => path = p,
-        None => {panic!("Can't Open Folder")}
+        None => {
+            println!("There was an {} selecting the directory, please try again.","error".fg::<Red>().bold().underline());
+            print!("Please enter {} for project: ","path".fg::<Blue>().bold().underline().italic());
+            let mut path_str = String::new();
+            io::stdout().flush()?;
+            io::stdin().read_line(&mut path_str)?;
+            path = PathBuf::from(path_str.trim());
+            if !path.exists() {
+                panic!("{} is not a valid directory",path.to_str().unwrap().fg::<Red>().bold().underline());
+            }
+        }
     }
     println!("Selected path : {}",path.to_str().unwrap().fg::<Black>().underline().italic());
 

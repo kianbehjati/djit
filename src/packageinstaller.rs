@@ -14,11 +14,19 @@ pub fn install(packages: Vec<&str>, is_uv:bool) -> anyhow::Result<()>{
                 .args(["/C",format!("uv pip install{}",&packages_str.as_str()).as_str()])
                 .output()
                 .context("failed to install packages")?;
+            if !install_out.status.success() {
+                let stderr = String::from_utf8_lossy(&install_out.stderr);
+                return Err(anyhow::anyhow!("Failed to install packages: {}", stderr));
+            }
         }else {
             let install_out = process::Command::new("sh")
                 .args(["-c",format!("uv pip install{}",&packages_str.as_str()).as_str()])
                 .output()
                 .context("failed to install packages")?;
+            if !install_out.status.success() {
+                let stderr = String::from_utf8_lossy(&install_out.stderr);
+                return Err(anyhow::anyhow!("Failed to install packages: {}", stderr));
+            }
         }
     }
     else {
@@ -27,11 +35,19 @@ pub fn install(packages: Vec<&str>, is_uv:bool) -> anyhow::Result<()>{
                 .args(["/C",format!(".venv\\Scripts\\pip.exe install{}",&packages_str.as_str()).as_str()])
                 .output()
                 .context("failed to install packages")?;
+            if !install_out.status.success() {
+                let stderr = String::from_utf8_lossy(&install_out.stderr);
+                return Err(anyhow::anyhow!("Failed to install packages: {}", stderr));
+            }
         }else {
             let install_out = process::Command::new("sh")
-                .args(["-c",format!("./venv/bin/pip install{}",&packages_str.as_str()).as_str()])
+                .args(["-c",format!(".venv/bin/pip install{}",&packages_str.as_str()).as_str()])
                 .output()
                 .context("failed to install packages")?;
+            if !install_out.status.success() {
+                let stderr = String::from_utf8_lossy(&install_out.stderr);
+                return Err(anyhow::anyhow!("Failed to install packages: {}", stderr));
+            }
         }
     }
 
