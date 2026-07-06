@@ -1,7 +1,7 @@
 use reqwest::blocking::Client;
 
 pub fn checker() -> bool {
-    let response = Client::new().get("https://google.com").send();
+    let response = Client::new().get("https://pypi.org").send();
     match response {
         Ok(_) => {
             return true;
