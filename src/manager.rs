@@ -152,13 +152,13 @@ pub fn delete(
     if projects[&name]["path"].as_str() == path.to_str() {
         projects.as_object_mut().unwrap().remove(&name);
         projects["projects"].as_array_mut().unwrap().remove(index);
-    }
 
-    //delete from disk
-    if permanent {
-        fs::remove_dir_all(path)?
-    } else {
-        trash::delete(path)?;
+        //delete from disk
+        if permanent {
+            fs::remove_dir_all(path)?
+        } else {
+            trash::delete(path)?;
+        }
     }
 
     // delete from file(projects.json)
