@@ -26,7 +26,7 @@ pub fn starter(
 ) -> anyhow::Result<()> {
     
     if !(check::checker()) {
-        return Err(errors::ManagerError::Network("Can't reach google.com".into()).into());
+        return Err(errors::ManagerError::Network("Can't reach pypi.org".into()).into());
     };
 
     let apps: Vec<_> = res.apps.split(",").collect();
