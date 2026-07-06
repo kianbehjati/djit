@@ -69,9 +69,9 @@ pub fn requirements(is_uv: bool) -> anyhow::Result<()> {
                 .context("failed to create requirements.txt with uv")?;
         }
     } else {
-        if cfg!(target_os = "windwos"){
+        if cfg!(target_os = "windows"){
             process::Command::new("cmd")
-                .args([".venv\\Scripts\\pip.exe","freeze > requirements.txt"])
+                .args(["/C",".venv\\Scripts\\pip.exe freeze > requirements.txt"])
                 .output()
                 .context("failed to create requirements.txt")?;
         } else {
